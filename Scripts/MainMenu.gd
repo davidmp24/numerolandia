@@ -6,7 +6,7 @@ const LevelCardScript = preload("res://Scripts/LevelCard.gd")
 # Menu 100% visual: botões grandes com figuras, sem depender de leitura.
 
 const LEVELS := [
-	"res://Scenes/Level1_Encounter.tscn",
+	"res://Scenes/Level1_Garden.tscn",
 	"res://Scenes/Level2_AppleTree.tscn",
 	"res://Scenes/Level3_Elevator.tscn",
 	"res://Scenes/Level4_RainbowToll.tscn",

@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://cgardendlvl001"]
+
+[ext_resource type="Script" path="res://Scripts/Level1Manager.gd" id="1_lvl1mgr"]
+[ext_resource type="Script" path="res://Scripts/GardenVisual.gd" id="2_grdvis"]
+[ext_resource type="PackedScene" uid="uid://csleepingblock01" path="res://Scenes/SleepingBlock.tscn" id="3_slpblk"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="4_lmgr"]
+
+[node name="Level1_Garden" type="Node2D"]
+script = ExtResource("1_lvl1mgr")
+
+[node name="GardenVisual" type="Node2D" parent="."]
+script = ExtResource("2_grdvis")
+
+[node name="SleepingBlock1" parent="." instance=ExtResource("3_slpblk")]
+position = Vector2(550, 680)
+valor_maximo = 1
+
+[node name="SleepingBlock2" parent="." instance=ExtResource("3_slpblk")]
+position = Vector2(960, 650)
+valor_maximo = 2
+
+[node name="SleepingBlock3" parent="." instance=ExtResource("3_slpblk")]
+position = Vector2(1370, 620)
+valor_maximo = 3
+
+[node name="LevelManager" parent="." instance=ExtResource("4_lmgr")]
