@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://clevel6cold01"]
+
+[ext_resource type="Script" path="res://Scripts/Level6_NineCold.gd" id="1_l6cold"]
+[ext_resource type="Script" path="res://Scripts/WinterTrailVisual.gd" id="2_wvis"]
+[ext_resource type="PackedScene" uid="uid://dnumberblock01" path="res://Scenes/NumberBlock.tscn" id="3_nblock"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="4_lmgr"]
+[ext_resource type="Script" path="res://Scripts/IconButton.gd" id="5_iconbtn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_goal"]
+size = Vector2(140, 200)
+
+[node name="Level6_NineCold" type="Node2D"]
+script = ExtResource("1_l6cold")
+
+[node name="WinterTrailVisual" type="Node2D" parent="."]
+script = ExtResource("2_wvis")
+
+[node name="GoalArea" type="Area2D" parent="."]
+position = Vector2(1650, 680)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="GoalArea"]
+shape = SubResource("RectangleShape2D_goal")
+
+[node name="Block_9" parent="." instance=ExtResource("3_nblock")]
+position = Vector2(380, 680)
+value = 9
+
+[node name="CanvasLayerUI" type="CanvasLayer" parent="."]
+
+[node name="SneezeButton" type="Button" parent="CanvasLayerUI"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -230.0
+offset_right = 100.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+custom_minimum_size = Vector2(200, 200)
+script = ExtResource("5_iconbtn")
+icon_type = "sneeze"
+bg_color = Color(0.2, 0.7, 0.9, 1)
+pulse = true
+
+[node name="LevelManager" parent="." instance=ExtResource("4_lmgr")]
+
+[connection signal="pressed" from="CanvasLayerUI/SneezeButton" to="." method="_on_sneeze_button_pressed"]

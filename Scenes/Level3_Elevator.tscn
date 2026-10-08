@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://b0m74ktomnq2s"]
+
+[ext_resource type="Script" path="res://Scripts/Level3_Elevator.gd" id="1_l3ele"]
+[ext_resource type="Script" path="res://Scripts/ElevatorVisual.gd" id="2_elevis"]
+[ext_resource type="Script" path="res://Scripts/DoorVisual.gd" id="3_doorvis"]
+[ext_resource type="PackedScene" uid="uid://dnumberblock01" path="res://Scenes/NumberBlock.tscn" id="4_nblock"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="5_lmgr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cab"]
+size = Vector2(200, 260)
+
+[node name="Level3_Elevator" type="Node2D"]
+script = ExtResource("1_l3ele")
+
+[node name="ElevatorVisual" type="Node2D" parent="."]
+script = ExtResource("2_elevis")
+
+[node name="ElevatorCabin" type="Node2D" parent="."]
+position = Vector2(960, 560)
+
+[node name="DoorVisual" type="Node2D" parent="ElevatorCabin"]
+script = ExtResource("3_doorvis")
+
+[node name="CabinArea" type="Area2D" parent="ElevatorCabin"]
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ElevatorCabin/CabinArea"]
+shape = SubResource("RectangleShape2D_cab")
+
+[node name="Block_3" parent="." instance=ExtResource("4_nblock")]
+position = Vector2(450, 680)
+value = 3
+
+[node name="Block_2" parent="." instance=ExtResource("4_nblock")]
+position = Vector2(1350, 680)
+value = 2
+
+[node name="Block_1A" parent="." instance=ExtResource("4_nblock")]
+position = Vector2(250, 680)
+value = 1
+
+[node name="Block_1B" parent="." instance=ExtResource("4_nblock")]
+position = Vector2(1550, 680)
+value = 1
+
+[node name="LevelManager" parent="." instance=ExtResource("5_lmgr")]

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://clevelman001"]
+
+[ext_resource type="Script" path="res://Scripts/LevelManager.gd" id="1_lvl_mgr"]
+
+[node name="LevelManager" type="CanvasLayer"]
+script = ExtResource("1_lvl_mgr")

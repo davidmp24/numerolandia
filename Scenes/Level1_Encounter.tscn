@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://bl34nshoccpfk"]
+
+[ext_resource type="Script" path="res://Scripts/Level1_Encounter.gd" id="1_l1enc"]
+[ext_resource type="Script" path="res://Scripts/EncounterVisual.gd" id="2_encvis"]
+[ext_resource type="Script" path="res://Scripts/BridgeVisual.gd" id="3_brvis"]
+[ext_resource type="Script" path="res://Scripts/PressurePlateVisual.gd" id="4_ppvis"]
+[ext_resource type="PackedScene" uid="uid://dnumberblock01" path="res://Scenes/NumberBlock.tscn" id="5_nblock"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="6_lmgr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pp"]
+size = Vector2(120, 40)
+
+[node name="Level1_Encounter" type="Node2D"]
+script = ExtResource("1_l1enc")
+
+[node name="EncounterVisual" type="Node2D" parent="."]
+script = ExtResource("2_encvis")
+
+[node name="Bridge" type="Node2D" parent="."]
+position = Vector2(800, 736)
+rotation = -1.22173
+script = ExtResource("3_brvis")
+
+[node name="PressurePlate" type="Area2D" parent="."]
+position = Vector2(1360, 720)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PressurePlate"]
+shape = SubResource("RectangleShape2D_pp")
+
+[node name="PressurePlateVisual" type="Node2D" parent="PressurePlate"]
+script = ExtResource("4_ppvis")
+
+[node name="SkySpawnPoint" type="Marker2D" parent="."]
+position = Vector2(580, 80)
+
+[node name="NumberBlock_Start" parent="." instance=ExtResource("5_nblock")]
+position = Vector2(360, 660)
+value = 1
+
+[node name="LevelManager" parent="." instance=ExtResource("6_lmgr")]

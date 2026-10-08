@@ -1,0 +1,63 @@
+[gd_scene format=3 uid="uid://clevel5cave01"]
+
+[ext_resource type="Script" path="res://Scripts/Level5_NarrowCave.gd" id="1_l5cave"]
+[ext_resource type="Script" path="res://Scripts/CaveVisual.gd" id="2_cvis"]
+[ext_resource type="PackedScene" uid="uid://dnumberblock01" path="res://Scenes/NumberBlock.tscn" id="3_nblock"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="4_lmgr"]
+[ext_resource type="Script" path="res://Scripts/IconButton.gd" id="5_iconbtn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ent"]
+size = Vector2(80, 200)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
+size = Vector2(80, 200)
+
+[node name="Level5_NarrowCave" type="Node2D"]
+script = ExtResource("1_l5cave")
+
+[node name="CaveVisual" type="Node2D" parent="."]
+script = ExtResource("2_cvis")
+
+[node name="TunnelEntrance" type="Area2D" parent="CaveVisual"]
+position = Vector2(1080, 630)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CaveVisual/TunnelEntrance"]
+shape = SubResource("RectangleShape2D_ent")
+
+[node name="TunnelExit" type="Area2D" parent="CaveVisual"]
+position = Vector2(1480, 630)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CaveVisual/TunnelExit"]
+shape = SubResource("RectangleShape2D_exit")
+
+[node name="Block_8" parent="." instance=ExtResource("3_nblock")]
+position = Vector2(450, 680)
+value = 8
+
+[node name="CanvasLayerUI" type="CanvasLayer" parent="."]
+
+[node name="ScissorsButton" type="Button" parent="CanvasLayerUI"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -230.0
+offset_right = 100.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+custom_minimum_size = Vector2(200, 200)
+script = ExtResource("5_iconbtn")
+icon_type = "scissors"
+bg_color = Color(1, 0.28, 0.34, 1)
+pulse = true
+
+[node name="LevelManager" parent="." instance=ExtResource("4_lmgr")]
+
+[connection signal="pressed" from="CanvasLayerUI/ScissorsButton" to="." method="_on_scissors_button_pressed"]

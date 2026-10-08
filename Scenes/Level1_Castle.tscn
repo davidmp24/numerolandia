@@ -1,0 +1,46 @@
+[gd_scene load_steps=8 format=3 uid="uid://clevel1castle01"]
+
+[ext_resource type="Script" path="res://Scripts/Level1_Castle.gd" id="1_lvl1"]
+[ext_resource type="Script" path="res://Scripts/CastleVisual.gd" id="2_cvis"]
+[ext_resource type="Script" path="res://Scripts/GateVisual.gd" id="3_gvis"]
+[ext_resource type="Script" path="res://Scripts/LeverVisual.gd" id="4_lvis"]
+[ext_resource type="PackedScene" uid="uid://dnumberblock01" path="res://Scenes/NumberBlock.tscn" id="5_nblock"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="6_lmgr"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_lever"]
+radius = 48.0
+
+[node name="Level1_Castle" type="Node2D"]
+script = ExtResource("1_lvl1")
+
+[node name="CastleEnvironment" type="Node2D" parent="."]
+script = ExtResource("2_cvis")
+
+[node name="Gate" type="Node2D" parent="CastleEnvironment"]
+position = Vector2(805, 485)
+script = ExtResource("3_gvis")
+
+[node name="LeverArea" type="Area2D" parent="CastleEnvironment"]
+position = Vector2(1195, 335)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CastleEnvironment/LeverArea"]
+shape = SubResource("CircleShape2D_lever")
+
+[node name="LeverHandle" type="Node2D" parent="CastleEnvironment/LeverArea"]
+script = ExtResource("4_lvis")
+
+[node name="NumberBlock_A" parent="." instance=ExtResource("5_nblock")]
+position = Vector2(380, 710)
+value = 1
+
+[node name="NumberBlock_B" parent="." instance=ExtResource("5_nblock")]
+position = Vector2(580, 710)
+value = 2
+
+[node name="NumberBlock_C" parent="." instance=ExtResource("5_nblock")]
+position = Vector2(1480, 710)
+value = 2
+
+[node name="LevelManager" parent="." instance=ExtResource("6_lmgr")]

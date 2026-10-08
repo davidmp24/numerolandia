@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://b3pyswvofjvuq"]
+
+[ext_resource type="Script" path="res://Scripts/Level2_AppleTree.gd" id="1_l2app"]
+[ext_resource type="Script" path="res://Scripts/AppleTreeVisual.gd" id="2_treevis"]
+[ext_resource type="Script" path="res://Scripts/AppleVisual.gd" id="3_appvis"]
+[ext_resource type="PackedScene" uid="uid://dnumberblock01" path="res://Scenes/NumberBlock.tscn" id="4_nblock"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="5_lmgr"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_app"]
+radius = 50.0
+
+[node name="Level2_AppleTree" type="Node2D"]
+script = ExtResource("1_l2app")
+
+[node name="AppleTreeVisual" type="Node2D" parent="."]
+script = ExtResource("2_treevis")
+
+[node name="AppleTree" type="Node2D" parent="."]
+
+[node name="AppleArea" type="Area2D" parent="AppleTree"]
+position = Vector2(1010, 480)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AppleTree/AppleArea"]
+shape = SubResource("CircleShape2D_app")
+
+[node name="AppleVisual" type="Node2D" parent="AppleTree/AppleArea"]
+script = ExtResource("3_appvis")
+
+[node name="Block_2" parent="." instance=ExtResource("4_nblock")]
+position = Vector2(400, 690)
+value = 2
+
+[node name="Block_1A" parent="." instance=ExtResource("4_nblock")]
+position = Vector2(650, 690)
+value = 1
+
+[node name="Block_1B" parent="." instance=ExtResource("4_nblock")]
+position = Vector2(850, 690)
+value = 1
+
+[node name="LevelManager" parent="." instance=ExtResource("5_lmgr")]

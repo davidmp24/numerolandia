@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://b4t7i8lbqi4y7"]
+
+[ext_resource type="Script" path="res://Scripts/Level4_RainbowToll.gd" id="1_l4rain"]
+[ext_resource type="Script" path="res://Scripts/GardenVisual.gd" id="2_gvis"]
+[ext_resource type="Script" path="res://Scripts/SadCloudVisual.gd" id="3_cldvis"]
+[ext_resource type="PackedScene" uid="uid://dnumberblock01" path="res://Scenes/NumberBlock.tscn" id="4_nblock"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="5_lmgr"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_cld"]
+radius = 120.0
+
+[node name="Level4_RainbowToll" type="Node2D"]
+script = ExtResource("1_l4rain")
+
+[node name="GardenVisual" type="Node2D" parent="."]
+script = ExtResource("2_gvis")
+
+[node name="SadCloud" type="Node2D" parent="."]
+position = Vector2(1100, 480)
+
+[node name="SadCloudVisual" type="Node2D" parent="SadCloud"]
+script = ExtResource("3_cldvis")
+
+[node name="CloudArea" type="Area2D" parent="SadCloud"]
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SadCloud/CloudArea"]
+shape = SubResource("CircleShape2D_cld")
+
+[node name="Block_4" parent="." instance=ExtResource("4_nblock")]
+position = Vector2(420, 690)
+value = 4
+
+[node name="Block_3" parent="." instance=ExtResource("4_nblock")]
+position = Vector2(680, 690)
+value = 3
+
+[node name="LevelManager" parent="." instance=ExtResource("5_lmgr")]

@@ -1,0 +1,46 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
+[application]
+
+config/name="Numerolândia: Aventura em Blocos"
+config/description="Jogo educativo infantil de matemática com Number Blocks, desenvolvido em Godot 4."
+config/version="1.0.0"
+run/main_scene="res://Scenes/MainMenu.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.24, 0.72, 0.94, 1)
+boot_splash/stretch_mode=0
+config/icon="res://icon.svg"
+
+[autoload]
+
+AudioManager="*res://Scripts/AudioManager.gd"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/stretch/mode="canvas_items"
+window/handheld/orientation=6
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.239, 0.722, 0.941, 1)
