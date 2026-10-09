@@ -55,11 +55,16 @@ var numberling_scale: float = 1.0
 var is_numberling_pulsing: bool = true
 var pulse_time: float = 0.0
 var numberling_local_rect: Rect2 = Rect2()
+var touched_on_numberling: bool = false
 
-# Tolerância de Arraste (Deadzone / Threshold)
-const DRAG_THRESHOLD: float = 10.0
+# Tolerância e Estado de Arraste (Deadzone / Threshold)
+const DRAG_THRESHOLD: float = 8.0 ## Limiar suave para crianças pequenas (8px)
+var is_touch_pressed: bool = false
 var is_potential_drag: bool = false
+var active_touch_index: int = -1
+var drag_touch_index: int = -1 ## Compatibilidade
 var touch_start_pos: Vector2 = Vector2.ZERO
+var current_pointer_world_pos: Vector2 = Vector2.ZERO
 var swipe_start_pos: Vector2 = Vector2.ZERO
 var is_swiping: bool = false
 
@@ -80,17 +85,18 @@ func _ready() -> void:
 	idle_anim_time = randf() * TAU
 	pulse_time = randf() * TAU
 	
+	if label:
+		label.visible = false
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		
 	if collision_shape and collision_shape.shape:
 		collision_shape.shape = collision_shape.shape.duplicate()
 		
 	update_appearance()
 
-var drag_touch_index: int = -1
-var current_pointer_world_pos: Vector2 = Vector2.ZERO
-
 ## Converte coordenadas de qualquer evento (Touch ou Mouse) para coordenadas globais do mundo 2D
 func _get_event_world_pos(event: InputEvent) -> Vector2:
-	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+	if "position" in event:
 		return get_canvas_transform().affine_inverse() * event.position
 	return get_global_mouse_position()
 
@@ -113,6 +119,7 @@ func _process(delta: float) -> void:
 	if is_dragging and not is_processing_math:
 		global_position = current_pointer_world_pos - drag_offset
 		_update_magnetic_attraction(delta)
+		queue_redraw()
 	else:
 		look_offset = Vector2.ZERO
 		magnetic_target = null
@@ -141,92 +148,136 @@ func _process(delta: float) -> void:
 	if value in [8, 10]:
 		queue_redraw()
 
-## Captura eventos globais na tela inteira (Soltura e Arraste sem perda de foco)
+## Captura eventos globais na tela inteira (Movimento e Soltura sem perda de foco)
 func _input(event: InputEvent) -> void:
-	# 1. Soltura do toque ou mouse em qualquer lugar da tela
-	if event is InputEventScreenTouch:
-		if not event.pressed and (event.index == drag_touch_index or drag_touch_index == -1):
-			is_potential_drag = false
-			drag_touch_index = -1
-			if is_dragging:
-				_end_drag()
-				return
-	elif event is InputEventMouseButton:
-		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			is_potential_drag = false
-			drag_touch_index = -1
-			if is_dragging:
-				_end_drag()
-				return
-
-	# 2. Movimento Touch Drag (Android / iOS / Mobile)
+	if is_destroyed or not is_touch_pressed:
+		return
+		
+	# 1. Movimento Touch Drag (Mobile)
 	if event is InputEventScreenDrag:
-		if event.index == drag_touch_index or (is_dragging and drag_touch_index == -1):
+		if active_touch_index == -1 or event.index == active_touch_index:
 			var world_pos = get_canvas_transform().affine_inverse() * event.position
-			current_pointer_world_pos = world_pos
+			_handle_pointer_motion(world_pos)
 			
-			if is_potential_drag and not is_dragging and not is_processing_math:
-				if world_pos.distance_to(touch_start_pos) >= DRAG_THRESHOLD:
-					_start_drag()
-					
-			if is_dragging and not is_processing_math:
-				global_position = current_pointer_world_pos - drag_offset
-				_update_magnetic_attraction(0.016)
-
-	# 3. Movimento Mouse Motion (Desktop / Emulador)
+	# 2. Movimento Mouse Motion (Desktop / Emulador)
 	elif event is InputEventMouseMotion:
-		if is_potential_drag or is_dragging:
-			var world_pos = get_global_mouse_position()
-			current_pointer_world_pos = world_pos
+		var world_pos = get_global_mouse_position()
+		_handle_pointer_motion(world_pos)
+		
+	# 3. Soltura Touch (Mobile)
+	elif event is InputEventScreenTouch and not event.pressed:
+		if active_touch_index == -1 or event.index == active_touch_index:
+			var world_pos = get_canvas_transform().affine_inverse() * event.position
+			_handle_pointer_release(world_pos)
 			
-			if is_potential_drag and not is_dragging and not is_processing_math:
-				if world_pos.distance_to(touch_start_pos) >= DRAG_THRESHOLD:
-					_start_drag()
-					
-			if is_dragging and not is_processing_math:
-				global_position = current_pointer_world_pos - drag_offset
-				_update_magnetic_attraction(0.016)
+	# 4. Soltura Mouse (Desktop)
+	elif event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var world_pos = get_global_mouse_position()
+		_handle_pointer_release(world_pos)
 
-## Evento de Toque Inicial no Bloco (Area2D / CollisionShape2D)
+## Processa movimento do ponteiro (toque ou mouse)
+func _handle_pointer_motion(world_pos: Vector2) -> void:
+	if not is_touch_pressed or is_destroyed or is_processing_math:
+		return
+		
+	current_pointer_world_pos = world_pos
+	
+	# Superou o limiar de sensibilidade: inicia o arraste oficial
+	if not is_dragging:
+		if world_pos.distance_to(touch_start_pos) >= DRAG_THRESHOLD:
+			_start_drag()
+			
+	if is_dragging and not is_processing_math:
+		global_position = current_pointer_world_pos - drag_offset
+		_update_magnetic_attraction(0.016)
+
+## Processa soltura do ponteiro (toque ou mouse)
+func _handle_pointer_release(release_pos: Vector2) -> void:
+	if not is_touch_pressed and not is_dragging:
+		return
+		
+	var was_dragging = is_dragging
+	is_touch_pressed = false
+	is_potential_drag = false
+	active_touch_index = -1
+	drag_touch_index = -1
+	
+	if was_dragging:
+		_end_drag()
+	else:
+		_handle_tap_release(release_pos)
+
+## Soltura após clique/toque estático sem arraste (Tap)
+func _handle_tap_release(release_pos: Vector2) -> void:
+	var tw = create_tween().set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "scale", Vector2.ONE, 0.2)
+	
+	var local_pos = to_local(release_pos)
+	if touched_on_numberling or numberling_local_rect.has_point(local_pos):
+		on_numberling_pressed()
+	else:
+		on_body_pressed()
+
+## Feedback tátil suave e imediato ao tocar em qualquer parte do bloco
+func _show_press_feedback() -> void:
+	var tw = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "scale", Vector2(1.06, 0.95), 0.08)
+	tw.tween_property(self, "scale", Vector2.ONE, 0.08)
+	if AudioManager:
+		AudioManager.play_click_sound()
+
+## Evento de Toque Inicial no Bloco (Area2D / CollisionShape2D cobre 100% do personagem)
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if is_destroyed or is_processing_math or not input_pickable:
+		return
+		
+	var is_press = false
+	var touch_idx = -1
+	
+	if event is InputEventScreenTouch and event.pressed:
+		is_press = true
+		touch_idx = event.index
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		is_press = true
+		touch_idx = -1
+		
+	if not is_press:
+		return
+		
+	# Se já está segurando este bloco, ignora eventos duplicados/emulados
+	if is_touch_pressed:
 		return
 		
 	var world_pos = _get_event_world_pos(event)
 	var local_pos = to_local(world_pos)
 	
-	# Toque no Numberling (número no topo da cabeça)
-	if numberling_local_rect.has_point(local_pos):
-		if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed) or (event is InputEventScreenTouch and event.pressed):
-			on_numberling_pressed()
+	# Detecta se o toque inicial foi sobre o Numberling ou sobre os cubos/corpo
+	touched_on_numberling = numberling_local_rect.has_point(local_pos)
+	
+	# Detecção de Duplo Toque dentro de 0.3s -> Separação (Split)
+	if double_tap_timer > 0.0 and world_pos.distance_to(touch_start_pos) < 35.0:
+		double_tap_timer = 0.0
+		tap_count = 0
+		is_touch_pressed = false
+		is_potential_drag = false
+		emit_signal("double_tapped")
+		if value > 1 and can_split and not is_processing_math:
+			split_block()
 			return
 			
-	var is_press = false
-	if event is InputEventScreenTouch and event.pressed:
-		is_press = true
-		drag_touch_index = event.index
-	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		is_press = true
-		drag_touch_index = -1
-		
-	if is_press:
-		if double_tap_timer > 0.0:
-			# Duplo Toque dentro de 0.3s -> Separação (Split)
-			double_tap_timer = 0.0
-			tap_count = 0
-			is_potential_drag = false
-			emit_signal("double_tapped")
-			if value > 1 and can_split and not is_processing_math:
-				split_block()
-				return
-		else:
-			# Toque Inicial: armazena coordenadas globais reais e prepara threshold
-			tap_count = 1
-			double_tap_timer = DOUBLE_TAP_TIMEOUT
-			touch_start_pos = world_pos
-			current_pointer_world_pos = world_pos
-			drag_offset = world_pos - global_position
-			is_potential_drag = true
+	# Primeiro Toque: armazena coordenadas globais e prepara o arraste do bloco como um todo
+	tap_count = 1
+	double_tap_timer = DOUBLE_TAP_TIMEOUT
+	active_touch_index = touch_idx
+	drag_touch_index = touch_idx
+	is_touch_pressed = true
+	is_potential_drag = true
+	touch_start_pos = world_pos
+	current_pointer_world_pos = world_pos
+	drag_offset = world_pos - global_position
+	
+	# Feedback tátil imediato ao toque
+	_show_press_feedback()
 
 func _update_magnetic_attraction(delta: float) -> void:
 	look_offset = (current_pointer_world_pos - global_position).normalized() * 5.0
@@ -252,6 +303,29 @@ func _update_magnetic_attraction(delta: float) -> void:
 		magnetic_strength = 0.0
 		
 	queue_redraw()
+
+## Reação carinhosa e alegre ao tocar no corpinho do bloco (cubos, rosto ou pezinhos)
+func on_body_pressed() -> void:
+	var tw = create_tween().set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "scale", Vector2(1.18, 0.88), 0.1)
+	tw.tween_property(self, "scale", Vector2(1.0, 1.0), 0.25)
+	
+	is_blinking = true
+	get_tree().create_timer(0.2).timeout.connect(func():
+		if is_instance_valid(self) and not is_destroyed:
+			is_blinking = false
+			queue_redraw()
+	)
+	
+	if AudioManager:
+		AudioManager.play_character_intro(value)
+		
+	var intro_text = "Sou o %d!" % value
+	if AudioManager and AudioManager.NUMBER_DATA.has(value):
+		intro_text = AudioManager.NUMBER_DATA[value].intro
+		
+	show_speech(intro_text, 2.0)
+	emit_signal("numberling_clicked", value)
 
 # Ao tocar no número acima da cabeça: Pulo do número + Fala "Sou o [Número]!"
 func on_numberling_pressed() -> void:
@@ -642,22 +716,46 @@ func get_character_layout() -> Dictionary:
 						count += 1
 			return { "cols": 2, "rows": r, "cubes": list }
 
-func update_appearance() -> void:
-	if not label:
-		return
-	label.visible = false
-	
+## Calcula a caixa delimitadora real de todos os elementos visuais do personagem
+func get_character_bounds() -> Rect2:
 	var layout = get_character_layout()
-	var w = float(layout.cols) * CUBE_SIZE + 16.0
-	var h = float(layout.rows) * CUBE_SIZE + 45.0
+	var total_w = float(layout.cols) * CUBE_SIZE
+	var total_h = float(layout.rows) * CUBE_SIZE
 	
-	if collision_shape and collision_shape.shape is RectangleShape2D:
-		var rect_shape = collision_shape.shape as RectangleShape2D
-		# Hitbox Gigante: 45% maior que a textura do personagem para facilitar o toque de crianças pequenas
-		rect_shape.size = Vector2(w * HITBOX_EXPANSION, h * HITBOX_EXPANSION)
-		# Ajusta centro da colisão
-		collision_shape.position = Vector2(0, -12.0)
+	var min_x = -total_w * 0.5
+	var max_x = total_w * 0.5
+	var min_y = -total_h * 0.5 - 48.0 # Topo do Numberling
+	var max_y = total_h * 0.5 + 14.0  # Base dos pezinhos
+	
+	# Largura mínima para abranger o Numberling e acessórios laterais
+	min_x = min(min_x, -30.0)
+	max_x = max(max_x, 30.0)
+	
+	return Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
+
+func update_appearance() -> void:
+	if label:
+		label.visible = false
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		
+	var bounds = get_character_bounds()
+	
+	if not collision_shape:
+		collision_shape = get_node_or_null("CollisionShape2D")
+	if not collision_shape:
+		collision_shape = CollisionShape2D.new()
+		add_child(collision_shape)
+		
+	if not collision_shape.shape or not (collision_shape.shape is RectangleShape2D):
+		collision_shape.shape = RectangleShape2D.new()
+	elif not collision_shape.shape.is_local_to_scene():
+		collision_shape.shape = collision_shape.shape.duplicate()
+		
+	var rect_shape = collision_shape.shape as RectangleShape2D
+	# Hitbox expandida para cobrir 100% do bloco com margem acessível para toques infantis
+	rect_shape.size = bounds.size * HITBOX_EXPANSION + Vector2(16.0, 16.0)
+	collision_shape.position = bounds.get_center()
+	
 	queue_redraw()
 
 func _draw() -> void:
