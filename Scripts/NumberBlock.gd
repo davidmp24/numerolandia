@@ -174,28 +174,26 @@ func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> voi
 		
 	var local_pos = to_local(get_global_mouse_position())
 	
-	# Detecção de Swipe Horizontal Nativo (InputEventScreenDrag / MouseMotion)
+	# 1. Detecção de Swipe Horizontal (InputEventScreenDrag / MouseMotion com delta seguro)
 	if event is InputEventScreenDrag:
-		if abs(event.velocity.x) > 280.0 or abs(event.relative.x) > 20.0:
+		var delta_x = event.position.x - touch_start_pos.x
+		if abs(delta_x) >= 45.0 or abs(event.velocity.x) >= 250.0:
 			is_potential_drag = false
-			emit_signal("swipe_performed", Vector2(sign(event.velocity.x if event.velocity.x != 0 else event.relative.x), 0))
+			var dir_x = sign(delta_x if delta_x != 0 else event.velocity.x)
+			emit_signal("swipe_performed", Vector2(dir_x, 0))
 			return
 	elif event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		if abs(event.relative.x) > 22.0:
+		var delta_x = event.position.x - touch_start_pos.x
+		if abs(delta_x) >= 45.0 or abs(event.relative.x) >= 22.0:
 			is_potential_drag = false
-			emit_signal("swipe_performed", Vector2(sign(event.relative.x), 0))
+			var dir_x = sign(delta_x if delta_x != 0 else event.relative.x)
+			emit_signal("swipe_performed", Vector2(dir_x, 0))
 			return
 	
-	# Verifica se clicou/tocou especificamente no Numberling (número acima da cabeça)
+	# 2. Verifica se tocou especificamente no Numberling (número acima da cabeça)
 	if numberling_local_rect.has_point(local_pos):
 		if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed) or (event is InputEventScreenTouch and event.pressed):
 			on_numberling_pressed()
-			return
-			
-	# Verifica se tocou no botão de tesourinha
-	if value > 1 and can_split and scissors_local_rect.has_point(local_pos):
-		if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed) or (event is InputEventScreenTouch and event.pressed):
-			split_block()
 			return
 			
 	# Trata toques e duplo clique com Timer nativo de 0.3s
@@ -655,7 +653,6 @@ func _draw() -> void:
 		
 	_draw_character_features(cubes, total_w, total_h)
 	_draw_numberling(total_h * 0.5)
-	_draw_scissors_badge(total_h * 0.5)
 	
 	# Feixe magnético luminoso conectando ao bloco próximo durante o arraste
 	if magnetic_target != null and is_instance_valid(magnetic_target) and is_dragging:
@@ -668,28 +665,6 @@ func _draw() -> void:
 	
 	if speech_text != "":
 		_draw_speech_bubble(total_h * 0.5)
-
-# Botão de Tesourinha Tátil no topo do bloco: toque único para separar
-func _draw_scissors_badge(top_y: float) -> void:
-	if value <= 1 or not can_split:
-		scissors_local_rect = Rect2()
-		return
-		
-	var s_pos = Vector2(36.0, -top_y - 24.0)
-	var s_size = Vector2(34.0, 34.0)
-	scissors_local_rect = Rect2(s_pos - s_size * 0.5, s_size)
-	
-	# Fundo circular vermelho com borda branca
-	draw_circle(s_pos + Vector2(0, 2), 16.0, Color(0, 0, 0, 0.25))
-	draw_circle(s_pos, 16.0, Color("#FF4757"))
-	draw_circle(s_pos, 16.0, Color.WHITE, false, 2.5)
-	
-	# Lâminas cruzadas em miniatura
-	draw_line(s_pos + Vector2(-6, -8), s_pos + Vector2(4, 4), Color.WHITE, 2.5)
-	draw_line(s_pos + Vector2(6, -8), s_pos + Vector2(-4, 4), Color.WHITE, 2.5)
-	draw_circle(s_pos + Vector2(-5, 6), 3.5, Color.WHITE, false, 2.0)
-	draw_circle(s_pos + Vector2(5, 6), 3.5, Color.WHITE, false, 2.0)
-	draw_circle(s_pos, 2.0, Color("#2F3542"))
 
 func _get_cube_color(index: int, total: int) -> Color:
 	match value:
