@@ -57,7 +57,7 @@ var pulse_time: float = 0.0
 var numberling_local_rect: Rect2 = Rect2()
 
 # Tolerância de Arraste (Deadzone / Threshold)
-const DRAG_THRESHOLD: float = 18.0
+const DRAG_THRESHOLD: float = 10.0
 var is_potential_drag: bool = false
 var touch_start_pos: Vector2 = Vector2.ZERO
 var swipe_start_pos: Vector2 = Vector2.ZERO
@@ -100,16 +100,17 @@ func _process(delta: float) -> void:
 		numberling_scale = 1.0 + sin(pulse_time) * 0.12
 		queue_redraw()
 		
-	# Verificação da tolerância de arraste (drag_threshold = 18.0 px)
+	# 1. Verificação de Threshold (> 10px) para iniciar o arraste com segurança
 	if is_potential_drag and not is_dragging and not is_processing_math:
 		if get_global_mouse_position().distance_to(touch_start_pos) >= DRAG_THRESHOLD:
 			_start_drag()
 
-	# Arraste suave com efeito ímã magnético
+	# 2. LÓGICA DE ARRASTE CORRIGIDA:
+	# SEMPRE que is_dragging == true, a global_position segue o toque/cursor do dedo diretamente
 	if is_dragging and not is_processing_math:
 		var target_pos = get_global_mouse_position() - drag_offset
-		global_position = global_position.lerp(target_pos, 25.0 * delta)
-		look_offset = (target_pos - global_position).normalized() * 5.0
+		global_position = target_pos # Atualização direta e responsiva da posição
+		look_offset = (get_global_mouse_position() - global_position).normalized() * 5.0
 		
 		# Efeito Ímã: atração magnética quando chega perto de outro bloco (< 160px) válido para somar
 		var closest: NumberBlock = null
@@ -126,7 +127,6 @@ func _process(delta: float) -> void:
 		if closest != null and min_d < 160.0:
 			magnetic_target = closest
 			magnetic_strength = clampf((160.0 - min_d) / 160.0, 0.0, 1.0)
-			# Atração suave em direção ao parceiro de fusão
 			if min_d < 85.0:
 				global_position = global_position.lerp(closest.global_position, 10.0 * delta)
 		else:
@@ -162,41 +162,35 @@ func _process(delta: float) -> void:
 	if value in [8, 10]:
 		queue_redraw()
 
+## Lógica de Soltura Global e Detecção de Movimento
 func _input(event: InputEvent) -> void:
+	# 1. Captura a soltura do dedo ou clique em qualquer lugar da tela
 	if (event is InputEventMouseButton and not event.pressed) or (event is InputEventScreenTouch and not event.pressed):
 		is_potential_drag = false
 		if is_dragging:
 			_end_drag()
+			return
+			
+	# 2. Resposta rápida de arraste em eventos de movimento touch/mouse
+	if is_potential_drag and not is_dragging and not is_processing_math:
+		if event is InputEventScreenDrag or event is InputEventMouseMotion:
+			if get_global_mouse_position().distance_to(touch_start_pos) >= DRAG_THRESHOLD:
+				_start_drag()
 
+## Lógica do Toque no Bloco (Área do CollisionShape2D)
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if is_destroyed or is_processing_math:
 		return
 		
 	var local_pos = to_local(get_global_mouse_position())
 	
-	# 1. Detecção de Swipe Horizontal (InputEventScreenDrag / MouseMotion com delta seguro)
-	if event is InputEventScreenDrag:
-		var delta_x = event.position.x - touch_start_pos.x
-		if abs(delta_x) >= 45.0 or abs(event.velocity.x) >= 250.0:
-			is_potential_drag = false
-			var dir_x = sign(delta_x if delta_x != 0 else event.velocity.x)
-			emit_signal("swipe_performed", Vector2(dir_x, 0))
-			return
-	elif event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		var delta_x = event.position.x - touch_start_pos.x
-		if abs(delta_x) >= 45.0 or abs(event.relative.x) >= 22.0:
-			is_potential_drag = false
-			var dir_x = sign(delta_x if delta_x != 0 else event.relative.x)
-			emit_signal("swipe_performed", Vector2(dir_x, 0))
-			return
-	
-	# 2. Verifica se tocou especificamente no Numberling (número acima da cabeça)
+	# 1. Toque no Numberling (número acima da cabeça)
 	if numberling_local_rect.has_point(local_pos):
 		if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed) or (event is InputEventScreenTouch and event.pressed):
 			on_numberling_pressed()
 			return
 			
-	# Trata toques e duplo clique com Timer nativo de 0.3s
+	# 2. Toque Inicial do Dedo ou Mouse (Press)
 	var is_press = false
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		is_press = true
@@ -205,7 +199,7 @@ func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> voi
 		
 	if is_press:
 		if double_tap_timer > 0.0:
-			# Segundo toque detectado dentro da janela de 0.3s!
+			# Segundo toque detectado dentro de 0.3s!
 			double_tap_timer = 0.0
 			tap_count = 0
 			is_potential_drag = false
@@ -214,10 +208,11 @@ func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> voi
 				split_block()
 				return
 		else:
-			# Primeiro toque: inicia a janela do Timer de 0.3s
+			# Primeiro toque: armazena coordenadas iniciais e prepara o threshold de arraste
 			tap_count = 1
 			double_tap_timer = DOUBLE_TAP_TIMEOUT
 			touch_start_pos = get_global_mouse_position()
+			drag_offset = get_global_mouse_position() - global_position
 			is_potential_drag = true
 	else:
 		if (event is InputEventMouseButton and not event.pressed) or (event is InputEventScreenTouch and not event.pressed):
@@ -246,7 +241,7 @@ func on_numberling_pressed() -> void:
 	emit_signal("numberling_clicked", value)
 
 func _start_drag() -> void:
-	if is_dragging or is_destroyed:
+	if is_dragging or is_destroyed or is_processing_math:
 		return
 	is_potential_drag = false
 	is_numberling_pulsing = false
@@ -267,6 +262,12 @@ func _end_drag() -> void:
 		return
 	is_dragging = false
 	z_index = original_z_index
+	
+	# Detecção de Swipe Horizontal rápido (distância percorrida >= 45px)
+	var swipe_dist_x = get_global_mouse_position().x - touch_start_pos.x
+	if abs(swipe_dist_x) >= 45.0:
+		emit_signal("swipe_performed", Vector2(sign(swipe_dist_x), 0))
+		
 	emit_signal("dragged_end")
 	
 	var tw = create_tween().set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
