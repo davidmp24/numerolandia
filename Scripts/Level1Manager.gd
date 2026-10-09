@@ -6,7 +6,7 @@ class_name Level1Manager
 
 # Referências a nós da cena
 @onready var level_manager: LevelManager = $LevelManager
-@export var next_scene_path: String = "res://Scenes/Level2_AppleTree.tscn"
+@export var next_scene_path: String = "res://Scenes/Level3_AppleTree.tscn"
 
 # Lista de blocos dorminhocos e controle de vitória
 @export var blocks: Array[SleepingBlock] = []

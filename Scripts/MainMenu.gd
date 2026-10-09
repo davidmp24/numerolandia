@@ -7,9 +7,8 @@ const LevelCardScript = preload("res://Scripts/LevelCard.gd")
 
 const LEVELS := [
 	"res://Scenes/Level1_Garden.tscn",
-	"res://Scenes/Level2_AppleTree.tscn",
-	"res://Scenes/Level3_Elevator.tscn",
-	"res://Scenes/Level4_RainbowToll.tscn",
+	"res://Scenes/Level3_AppleTree.tscn",
+	"res://Scenes/Level4_MagicScale.tscn",
 	"res://Scenes/Level5_NarrowCave.tscn",
 	"res://Scenes/Level6_NineCold.tscn",
 	"res://Scenes/Level7_RocketLaunch.tscn",

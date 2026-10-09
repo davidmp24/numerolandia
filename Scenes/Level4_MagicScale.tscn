@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://clvl4magicscale01"]
+
+[ext_resource type="Script" path="res://Scripts/Level4Manager.gd" id="1_l4mgr"]
+[ext_resource type="Script" path="res://Scripts/GardenVisual.gd" id="2_gdvis"]
+[ext_resource type="Script" path="res://Scripts/MagicalGateVisual.gd" id="3_gtvis"]
+[ext_resource type="Script" path="res://Scripts/GateDoorVisual.gd" id="4_dorvis"]
+[ext_resource type="Script" path="res://Scripts/GateLockVisual.gd" id="5_lckvis"]
+[ext_resource type="PackedScene" uid="uid://cmagicscale01" path="res://Scenes/MagicScale.tscn" id="6_sclsc"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="7_lmgr"]
+
+[node name="Level4_MagicScale" type="Node2D"]
+script = ExtResource("1_l4mgr")
+
+[node name="GardenVisual" type="Node2D" parent="."]
+script = ExtResource("2_gdvis")
+
+[node name="MagicalGate" type="Node2D" parent="."]
+position = Vector2(960, 360)
+
+[node name="GatePillars" type="Node2D" parent="MagicalGate"]
+script = ExtResource("3_gtvis")
+
+[node name="DoorLeft" type="Node2D" parent="MagicalGate"]
+position = Vector2(0, 0)
+script = ExtResource("4_dorvis")
+
+[node name="DoorRight" type="Node2D" parent="MagicalGate"]
+position = Vector2(0, 0)
+script = ExtResource("4_dorvis")
+is_right_door = true
+
+[node name="Lock" type="Node2D" parent="MagicalGate"]
+position = Vector2(0, 0)
+script = ExtResource("5_lckvis")
+
+[node name="MagicScale" parent="." instance=ExtResource("6_sclsc")]
+position = Vector2(960, 680)
+
+[node name="LevelManager" parent="." instance=ExtResource("7_lmgr")]

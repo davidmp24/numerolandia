@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://clvl3appletree01"]
+
+[ext_resource type="Script" path="res://Scripts/Level3Manager.gd" id="1_l3mgr"]
+[ext_resource type="Script" path="res://Scripts/AppleTreeVisual.gd" id="2_trvis"]
+[ext_resource type="Script" path="res://Scripts/AppleVisual.gd" id="3_apvis"]
+[ext_resource type="PackedScene" uid="uid://dnumberblock01" path="res://Scenes/NumberBlock.tscn" id="4_nblk"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="5_lmgr"]
+
+[node name="Level3_AppleTree" type="Node2D"]
+script = ExtResource("1_l3mgr")
+
+[node name="AppleTreeVisual" type="Node2D" parent="."]
+script = ExtResource("2_trvis")
+
+[node name="AppleTree" type="Node2D" parent="."]
+
+[node name="Apple" type="Node2D" parent="AppleTree"]
+position = Vector2(960, 420)
+
+[node name="AppleVisual" type="Node2D" parent="AppleTree/Apple"]
+script = ExtResource("3_apvis")
+
+[node name="AppleTargetHeight" type="Marker2D" parent="AppleTree"]
+position = Vector2(960, 460)
+
+[node name="Block_3" parent="." instance=ExtResource("4_nblk")]
+position = Vector2(960, 680)
+value = 3
+
+[node name="Block_2" parent="." instance=ExtResource("4_nblk")]
+position = Vector2(480, 700)
+value = 2
+
+[node name="Block_1" parent="." instance=ExtResource("4_nblk")]
+position = Vector2(280, 720)
+value = 1
+
+[node name="LevelManager" parent="." instance=ExtResource("5_lmgr")]

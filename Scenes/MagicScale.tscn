@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://cmagicscale01"]
+
+[ext_resource type="Script" path="res://Scripts/MagicScale.gd" id="1_mscale"]
+[ext_resource type="Script" path="res://Scripts/ScaleVisual.gd" id="2_scavis"]
+[ext_resource type="Script" path="res://Scripts/ScalePlateVisual.gd" id="3_pltvis"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_drop"]
+size = Vector2(170, 140)
+
+[node name="MagicScale" type="Node2D"]
+script = ExtResource("1_mscale")
+
+[node name="ScaleVisual" type="Node2D" parent="."]
+script = ExtResource("2_scavis")
+
+[node name="Beam" type="Node2D" parent="."]
+
+[node name="LeftAnchor" type="Node2D" parent="Beam"]
+position = Vector2(-220, 0)
+
+[node name="LeftPlate" type="Node2D" parent="Beam/LeftAnchor"]
+position = Vector2(0, 90)
+
+[node name="PlateVisual" type="Node2D" parent="Beam/LeftAnchor/LeftPlate"]
+script = ExtResource("3_pltvis")
+
+[node name="RightAnchor" type="Node2D" parent="Beam"]
+position = Vector2(220, 0)
+
+[node name="RightPlate" type="Node2D" parent="Beam/RightAnchor"]
+position = Vector2(0, 90)
+
+[node name="PlateVisual" type="Node2D" parent="Beam/RightAnchor/RightPlate"]
+script = ExtResource("3_pltvis")
+
+[node name="DropZone" type="Area2D" parent="Beam/RightAnchor/RightPlate"]
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Beam/RightAnchor/RightPlate/DropZone"]
+position = Vector2(0, -30)
+shape = SubResource("RectangleShape2D_drop")
