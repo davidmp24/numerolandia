@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://clvl5seesaw01"]
+
+[ext_resource type="Script" path="res://Scripts/Level5Manager.gd" id="1_l5mgr"]
+[ext_resource type="Script" path="res://Scripts/GardenVisual.gd" id="2_gdvis"]
+[ext_resource type="Script" path="res://Scripts/SeesawVisual.gd" id="3_ssvis"]
+[ext_resource type="Script" path="res://Scripts/SeesawBeamVisual.gd" id="4_bmvis"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="5_lmgr"]
+
+[node name="Level5_Seesaw" type="Node2D"]
+script = ExtResource("1_l5mgr")
+
+[node name="GardenVisual" type="Node2D" parent="."]
+script = ExtResource("2_gdvis")
+
+[node name="Seesaw" type="Node2D" parent="."]
+position = Vector2(960, 680)
+
+[node name="SeesawVisual" type="Node2D" parent="Seesaw"]
+script = ExtResource("3_ssvis")
+
+[node name="Beam" type="Node2D" parent="Seesaw"]
+position = Vector2(0, -10)
+
+[node name="BeamVisual" type="Node2D" parent="Seesaw/Beam"]
+script = ExtResource("4_bmvis")
+
+[node name="LeftSeat" type="Node2D" parent="Seesaw/Beam"]
+position = Vector2(-330, 0)
+
+[node name="RightSeat" type="Node2D" parent="Seesaw/Beam"]
+position = Vector2(330, 0)
+
+[node name="LevelManager" parent="." instance=ExtResource("5_lmgr")]

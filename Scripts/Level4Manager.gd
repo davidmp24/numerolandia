@@ -12,7 +12,7 @@ class_name Level4Manager
 @onready var gate_door_right: Node2D = $MagicalGate/DoorRight
 @onready var gate_lock: Node2D = $MagicalGate/Lock
 
-@export var next_scene_path: String = "res://Scenes/Level5_NarrowCave.tscn"
+@export var next_scene_path: String = "res://Scenes/Level5_Seesaw.tscn"
 
 # Controle de Estado e Blocos Soltos
 var is_gate_opened: bool = false

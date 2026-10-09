@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://clvl6growthtunnel01"]
+
+[ext_resource type="Script" path="res://Scripts/Level6Manager.gd" id="1_l6mgr"]
+[ext_resource type="Script" path="res://Scripts/GardenVisual.gd" id="2_gdvis"]
+[ext_resource type="Script" path="res://Scripts/GrowthTunnelVisual.gd" id="3_tnvis"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="4_lmgr"]
+
+[node name="Level6_GrowthTunnel" type="Node2D"]
+script = ExtResource("1_l6mgr")
+
+[node name="GardenVisual" type="Node2D" parent="."]
+script = ExtResource("2_gdvis")
+
+[node name="GrowthTunnel" type="Node2D" parent="."]
+position = Vector2(800, 750)
+
+[node name="TunnelVisual" type="Node2D" parent="GrowthTunnel"]
+script = ExtResource("3_tnvis")
+
+[node name="EntrancePoint" type="Marker2D" parent="GrowthTunnel"]
+position = Vector2(0, -100)
+
+[node name="ExitPoint" type="Marker2D" parent="GrowthTunnel"]
+position = Vector2(650, -100)
+
+[node name="HeightMeter" type="Node2D" parent="GrowthTunnel"]
+position = Vector2(20, -320)
+
+[node name="LevelManager" parent="." instance=ExtResource("4_lmgr")]
