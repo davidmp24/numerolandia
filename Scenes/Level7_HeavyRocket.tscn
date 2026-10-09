@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://clvl7heavyrock01"]
+
+[ext_resource type="Script" path="res://Scripts/Level7Manager.gd" id="1_l7mgr"]
+[ext_resource type="Script" path="res://Scripts/LaunchPadVisual.gd" id="2_lpvis"]
+[ext_resource type="PackedScene" uid="uid://clevelman001" path="res://Scenes/LevelManager.tscn" id="3_lmgr"]
+
+[node name="Level7_HeavyRocket" type="Node2D"]
+script = ExtResource("1_l7mgr")
+
+[node name="LaunchPadVisual" type="Node2D" parent="."]
+script = ExtResource("2_lpvis")
+
+[node name="LaunchPad" type="Node2D" parent="."]
+position = Vector2(960, 680)
+
+[node name="RocketSpawnPoint" type="Marker2D" parent="LaunchPad"]
+position = Vector2(0, 0)
+
+[node name="LevelManager" parent="." instance=ExtResource("3_lmgr")]

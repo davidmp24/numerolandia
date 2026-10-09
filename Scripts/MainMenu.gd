@@ -11,7 +11,8 @@ const LEVELS := [
 	"res://Scenes/Level4_MagicScale.tscn",
 	"res://Scenes/Level5_Seesaw.tscn",
 	"res://Scenes/Level6_GrowthTunnel.tscn",
-	"res://Scenes/Level7_RocketLaunch.tscn",
+	"res://Scenes/Level7_HeavyRocket.tscn",
+	"res://Scenes/Level8_NarrowCave.tscn",
 	"res://Scenes/Level1_Castle.tscn",
 	"res://Scenes/Level2_Fluffies.tscn",
 ]

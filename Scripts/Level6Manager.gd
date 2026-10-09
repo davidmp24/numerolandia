@@ -6,7 +6,7 @@ class_name Level6Manager
 
 # Referências a nós da cena
 @onready var level_manager: LevelManager = $LevelManager
-@export var next_scene_path: String = "res://Scenes/Level7_RocketLaunch.tscn"
+@export var next_scene_path: String = "res://Scenes/Level7_HeavyRocket.tscn"
 
 # Elementos do Túnel e Cenário
 @onready var tunnel_entrance: Marker2D = $GrowthTunnel/EntrancePoint

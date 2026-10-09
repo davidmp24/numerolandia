@@ -8,9 +8,12 @@ signal split_performed()
 signal dragged_start()
 signal dragged_end()
 signal numberling_clicked(value: int)
+signal swipe_performed(direction: Vector2)
+signal double_tapped()
 
 # Tamanho padrão de cada bloquinho individual (unidade cúbica)
 const CUBE_SIZE: float = 46.0
+const HITBOX_EXPANSION: float = 1.45 ## Hitbox 45% maior que a textura para acessibilidade infantil
 
 # Propriedade fundamental exportada
 @export var value: int = 1:
@@ -25,6 +28,16 @@ var is_dragging: bool = false
 var drag_offset: Vector2 = Vector2.ZERO
 var original_z_index: int = 0
 var is_destroyed: bool = false
+
+# Cooldown e Travas Globais de Engenharia
+var is_processing_math: bool = false ## Trava global de 1 a 2s durante operações matemáticas
+@export var can_split: bool = true
+var can_merge: bool = true
+
+# Detecção de Duplo Toque com Timer Nativo de 0.3s
+var double_tap_timer: float = 0.0
+const DOUBLE_TAP_TIMEOUT: float = 0.3
+var tap_count: int = 0
 
 # Animações de vida e expressão
 var eye_blink_timer: float = 0.0
@@ -43,18 +56,12 @@ var is_numberling_pulsing: bool = true
 var pulse_time: float = 0.0
 var numberling_local_rect: Rect2 = Rect2()
 
-# Regras de Negócio e Cooldowns
-@export var can_split: bool = true
-var can_merge: bool = true
-
 # Tolerância de Arraste (Deadzone / Threshold)
 const DRAG_THRESHOLD: float = 18.0
 var is_potential_drag: bool = false
 var touch_start_pos: Vector2 = Vector2.ZERO
-
-# Botão de Tesourinha Tátil e Duplo Toque para Crianças
-var scissors_local_rect: Rect2 = Rect2()
-var last_touch_time: float = 0.0
+var swipe_start_pos: Vector2 = Vector2.ZERO
+var is_swiping: bool = false
 
 # Efeito Ímã Magnético de Fusão
 var magnetic_target: NumberBlock = null
@@ -81,6 +88,12 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	idle_anim_time += delta
 	
+	# Timer de Duplo Toque de 0.3s
+	if double_tap_timer > 0.0:
+		double_tap_timer -= delta
+		if double_tap_timer <= 0.0:
+			tap_count = 0
+	
 	# Pulso suave do Numberling no início para convidar o toque da criança
 	if is_numberling_pulsing:
 		pulse_time += delta * 4.0
@@ -88,12 +101,12 @@ func _process(delta: float) -> void:
 		queue_redraw()
 		
 	# Verificação da tolerância de arraste (drag_threshold = 18.0 px)
-	if is_potential_drag and not is_dragging:
+	if is_potential_drag and not is_dragging and not is_processing_math:
 		if get_global_mouse_position().distance_to(touch_start_pos) >= DRAG_THRESHOLD:
 			_start_drag()
 
 	# Arraste suave com efeito ímã magnético
-	if is_dragging:
+	if is_dragging and not is_processing_math:
 		var target_pos = get_global_mouse_position() - drag_offset
 		global_position = global_position.lerp(target_pos, 25.0 * delta)
 		look_offset = (target_pos - global_position).normalized() * 5.0
@@ -103,7 +116,7 @@ func _process(delta: float) -> void:
 		var min_d: float = 999999.0
 		var blocks = get_tree().get_nodes_in_group("number_blocks")
 		for b in blocks:
-			if b is NumberBlock and b != self and not b.is_destroyed and not b.is_dragging and b.can_merge:
+			if b is NumberBlock and b != self and not b.is_destroyed and not b.is_dragging and b.can_merge and not b.is_processing_math:
 				if self.value + b.value <= 10:
 					var d = global_position.distance_to(b.global_position)
 					if d < min_d:
@@ -156,10 +169,22 @@ func _input(event: InputEvent) -> void:
 			_end_drag()
 
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
-	if is_destroyed:
+	if is_destroyed or is_processing_math:
 		return
 		
 	var local_pos = to_local(get_global_mouse_position())
+	
+	# Detecção de Swipe Horizontal Nativo (InputEventScreenDrag / MouseMotion)
+	if event is InputEventScreenDrag:
+		if abs(event.velocity.x) > 280.0 or abs(event.relative.x) > 20.0:
+			is_potential_drag = false
+			emit_signal("swipe_performed", Vector2(sign(event.velocity.x if event.velocity.x != 0 else event.relative.x), 0))
+			return
+	elif event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		if abs(event.relative.x) > 22.0:
+			is_potential_drag = false
+			emit_signal("swipe_performed", Vector2(sign(event.relative.x), 0))
+			return
 	
 	# Verifica se clicou/tocou especificamente no Numberling (número acima da cabeça)
 	if numberling_local_rect.has_point(local_pos):
@@ -167,40 +192,37 @@ func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> voi
 			on_numberling_pressed()
 			return
 			
-	# Verifica se tocou no botão de tesourinha (para separar o bloco facilmente no touch)
+	# Verifica se tocou no botão de tesourinha
 	if value > 1 and can_split and scissors_local_rect.has_point(local_pos):
 		if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed) or (event is InputEventScreenTouch and event.pressed):
 			split_block()
 			return
 			
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			if event.pressed:
-				if event.double_click and value > 1 and can_split:
-					is_potential_drag = false
-					split_block()
-					return
-				touch_start_pos = get_global_mouse_position()
-				is_potential_drag = true
-			else:
-				is_potential_drag = false
-				if is_dragging:
-					_end_drag()
-		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			if value > 1 and can_split:
-				split_block()
-	elif event is InputEventScreenTouch:
-		if event.pressed:
-			var now = float(Time.get_ticks_msec()) / 1000.0
-			if (now - last_touch_time) < 0.45 and value > 1 and can_split:
-				last_touch_time = 0.0
-				is_potential_drag = false
+	# Trata toques e duplo clique com Timer nativo de 0.3s
+	var is_press = false
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		is_press = true
+	elif event is InputEventScreenTouch and event.pressed:
+		is_press = true
+		
+	if is_press:
+		if double_tap_timer > 0.0:
+			# Segundo toque detectado dentro da janela de 0.3s!
+			double_tap_timer = 0.0
+			tap_count = 0
+			is_potential_drag = false
+			emit_signal("double_tapped")
+			if value > 1 and can_split and not is_processing_math:
 				split_block()
 				return
-			last_touch_time = now
+		else:
+			# Primeiro toque: inicia a janela do Timer de 0.3s
+			tap_count = 1
+			double_tap_timer = DOUBLE_TAP_TIMEOUT
 			touch_start_pos = get_global_mouse_position()
 			is_potential_drag = true
-		else:
+	else:
+		if (event is InputEventMouseButton and not event.pressed) or (event is InputEventScreenTouch and not event.pressed):
 			is_potential_drag = false
 			if is_dragging:
 				_end_drag()
@@ -598,7 +620,8 @@ func update_appearance() -> void:
 	
 	if collision_shape and collision_shape.shape is RectangleShape2D:
 		var rect_shape = collision_shape.shape as RectangleShape2D
-		rect_shape.size = Vector2(w, h)
+		# Hitbox Gigante: 45% maior que a textura do personagem para facilitar o toque de crianças pequenas
+		rect_shape.size = Vector2(w * HITBOX_EXPANSION, h * HITBOX_EXPANSION)
 		# Ajusta centro da colisão
 		collision_shape.position = Vector2(0, -12.0)
 		
